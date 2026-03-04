@@ -40,6 +40,7 @@
       font-family: 'Noto Nastaliq Urdu', 'Arabic Typesetting', serif;
       background: var(--bg);
       color: var(--text);
+      direction: rtl;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
@@ -608,7 +609,8 @@
       .arabic-body { font-size: 1.08rem; }
       .hadith-section { padding: 1.2rem 1.25rem; }
       .fn-item { padding: .75rem 1.25rem; }
-      #chapterSelect { max-width: 100%; }
+      .header-inner { flex-wrap: nowrap; padding: .65rem 1rem; gap: .6rem; }
+      #chapterSelect { min-width: 0; max-width: none; }
       .brand-sub { display: none; }
     }
   </style>
@@ -703,6 +705,7 @@
       lang = l;
       document.documentElement.dir  = l === 'en' ? 'ltr' : 'rtl';
       document.documentElement.lang = l === 'en' ? 'en'  : 'ur';
+      document.body.style.direction  = l === 'en' ? 'ltr' : 'rtl';
       window.scrollTo(0, 0);
       document.getElementById('btnUr').classList.toggle('active', l === 'ur');
       document.getElementById('btnEn').classList.toggle('active', l === 'en');
