@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>علم — کتاب الحدیث</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ── Reset ─────────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── Design tokens ─────────────────────────────────────────────────── */
+    :root {
+      --bg:           #F4EFE6;
+      --bg-card:      #FFFFFF;
+      --bg-fn:        #FAF6F0;
+      --navy:         #1C3145;
+      --navy-light:   #243D54;
+      --gold:         #B8860B;
+      --gold-light:   #D4A520;
+      --gold-pale:    #F5EDD8;
+      --text:         #1E1E1E;
+      --text-mid:     #4A4A4A;
+      --text-muted:   #888;
+      --border:       #DDD5C8;
+      --shadow-sm:    0 1px 4px rgba(0,0,0,.06);
+      --shadow:       0 4px 16px rgba(0,0,0,.10);
+      --shadow-lg:    0 12px 40px rgba(0,0,0,.14);
+      --radius:       12px;
+      --transition:   .25s ease;
+    }
+
+    /* ── Base ───────────────────────────────────────────────────────────── */
+    html { scroll-behavior: smooth; font-size: 16px; }
+
+    body {
+      font-family: 'Noto Nastaliq Urdu', 'Arabic Typesetting', serif;
+      background: var(--bg);
+      color: var(--text);
+      direction: rtl;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Site header ────────────────────────────────────────────────────── */
+    .site-header {
+      background: var(--navy);
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      box-shadow: 0 2px 20px rgba(0,0,0,.35);
+    }
+
+    .header-inner {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: .85rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      flex-wrap: wrap;
+    }
+
+    .site-brand {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.2;
+    }
+
+    .brand-title {
+      font-family: 'Amiri', serif;
+      font-size: 1.55rem;
+      font-weight: 700;
+      color: var(--gold-light);
+      letter-spacing: .02em;
+    }
+
+    .brand-sub {
+      font-size: .72rem;
+      color: rgba(255,255,255,.45);
+      letter-spacing: .06em;
+    }
+
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      flex: 1;
+      justify-content: flex-start;
+    }
+
+    .control-label {
+      font-size: .75rem;
+      color: rgba(255,255,255,.55);
+      white-space: nowrap;
+    }
+
+    #chapterSelect {
+      flex: 1;
+      max-width: 360px;
+      min-width: 180px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.18);
+      color: #fff;
+      border-radius: 7px;
+      padding: .45rem .85rem;
+      font-size: .88rem;
+      font-family: 'Noto Nastaliq Urdu', serif;
+      direction: rtl;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      transition: border-color var(--transition), background var(--transition);
+    }
+
+    #chapterSelect:focus {
+      outline: none;
+      border-color: var(--gold-light);
+      background: rgba(255,255,255,.13);
+    }
+
+    #chapterSelect option {
+      background: #1C3145;
+      color: #fff;
+    }
+
+    /* ── Main ───────────────────────────────────────────────────────────── */
+    .main {
+      flex: 1;
+      max-width: 860px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 1.5rem 1.5rem 7rem;
+    }
+
+    /* ── Chapter label (compact) ────────────────────────────────────────── */
+    .chapter-card {
+      display: flex;
+      align-items: baseline;
+      gap: .6rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.1rem;
+      padding: 0 .25rem;
+    }
+
+    .chapter-meta {
+      font-size: .7rem;
+      color: var(--text-muted);
+      letter-spacing: .08em;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .chapter-title {
+      font-family: 'Amiri', serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-mid);
+      line-height: 1.5;
+    }
+
+    .intro-btn {
+      background: none;
+      border: none;
+      color: var(--gold);
+      font-size: .72rem;
+      font-family: inherit;
+      cursor: pointer;
+      padding: 0;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .intro-btn:hover { color: var(--gold-light); }
+
+    /* Intro popover */
+    .chapter-intro-wrap {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .chapter-intro {
+      font-size: .88rem;
+      line-height: 2.1;
+      color: var(--text-mid);
+      white-space: pre-wrap;
+    }
+
+    .intro-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: .72rem;
+      font-family: inherit;
+      cursor: pointer;
+      display: block;
+      margin-top: .5rem;
+      padding: 0;
+    }
+
+    .intro-close:hover { color: var(--text); }
+
+    /* ── Hadith card ────────────────────────────────────────────────────── */
+    .hadith-card {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      margin-bottom: 1.25rem;
+      border: 1px solid var(--border);
+      animation: fadeSlide var(--transition) both;
+    }
+
+    @keyframes fadeSlide {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .hadith-header {
+      background: linear-gradient(120deg, var(--gold) 0%, var(--gold-light) 100%);
+      padding: .75rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .hadith-num {
+      font-family: 'Amiri', serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+
+    .hadith-num-label {
+      font-size: .72rem;
+      opacity: .85;
+    }
+
+    .hadith-pos {
+      font-size: .78rem;
+      color: rgba(255,255,255,.85);
+      background: rgba(0,0,0,.15);
+      padding: .2rem .6rem;
+      border-radius: 20px;
+    }
+
+    /* ── Content sections ───────────────────────────────────────────────── */
+    .hadith-section {
+      padding: 1.5rem 2rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .hadith-section:last-child { border-bottom: none; }
+
+    .section-label {
+      font-size: .65rem;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: .9rem;
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+    }
+
+    .section-label::before {
+      content: '';
+      width: 3px;
+      height: 14px;
+      background: var(--gold);
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .arabic-body {
+      font-family: 'Amiri', serif;
+      font-size: 1.22rem;
+      line-height: 2.3;
+      color: var(--navy);
+      direction: rtl;
+      text-align: justify;
+    }
+
+    .urdu-body {
+      font-family: 'Noto Nastaliq Urdu', 'Arabic Typesetting', serif;
+      font-size: 1.05rem;
+      line-height: 2.55;
+      color: var(--text);
+      direction: rtl;
+      text-align: justify;
+    }
+
+    sup {
+      font-size: .65em;
+      color: var(--gold);
+      font-weight: 700;
+      line-height: 0;
+    }
+
+    /* ── Footnote ref links ─────────────────────────────────────────────── */
+    .ref-link {
+      color: var(--gold);
+      text-decoration: none;
+      font-weight: 700;
+      border-bottom: 1px dotted var(--gold);
+      padding-bottom: 1px;
+      cursor: pointer;
+    }
+
+    .ref-link:hover { color: var(--gold-light); border-bottom-color: var(--gold-light); }
+
+    /* ── Footnote highlight pulse ───────────────────────────────────────── */
+    @keyframes fnPulse {
+      0%, 15% {
+        background-color: var(--gold-pale);
+        outline: 2px solid var(--gold);
+        border-radius: 4px;
+      }
+      100% {
+        background-color: transparent;
+        outline: 2px solid transparent;
+      }
+    }
+
+    .fn-highlight { animation: fnPulse 1.8s ease forwards; }
+
+    /* ── Footnotes ──────────────────────────────────────────────────────── */
+    .fn-card {
+      background: var(--bg-fn);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      margin-bottom: 1.25rem;
+    }
+
+    .fn-group-header {
+      padding: .85rem 1.5rem;
+      background: rgba(0,0,0,.03);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .fn-group-title {
+      font-size: .78rem;
+      font-weight: 700;
+      color: var(--text-mid);
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+    }
+
+    .fn-badge {
+      background: var(--gold);
+      color: #fff;
+      font-size: .65rem;
+      padding: .15rem .5rem;
+      border-radius: 10px;
+    }
+
+    .fn-chevron {
+      font-size: .75rem;
+      color: var(--text-muted);
+      transition: transform var(--transition);
+    }
+
+    .fn-chevron.open { transform: rotate(180deg); }
+
+    .fn-body {
+      overflow: hidden;
+      transition: max-height .35s ease;
+    }
+
+    .fn-body.collapsed { max-height: 0 !important; }
+
+    .fn-item {
+      padding: .9rem 1.75rem;
+      border-bottom: 1px dashed var(--border);
+      line-height: 2.1;
+      color: var(--text-mid);
+      font-size: .9rem;
+      direction: rtl;
+      white-space: pre-wrap;
+    }
+
+    .fn-item:last-child { border-bottom: none; }
+    .fn-item.fn-arabic { font-family: 'Amiri', serif; font-size: .95rem; }
+    .fn-item.fn-urdu   { font-family: 'Noto Nastaliq Urdu', serif; }
+
+    /* ── Progress bar ───────────────────────────────────────────────────── */
+    .progress-track {
+      height: 3px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: .45rem;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--gold), var(--gold-light));
+      border-radius: 2px;
+      transition: width var(--transition);
+    }
+
+    /* ── Dot progress ───────────────────────────────────────────────────── */
+    .dots-row {
+      display: flex;
+      justify-content: center;
+      gap: 5px;
+      flex-wrap: wrap;
+      margin-top: .4rem;
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--border);
+      cursor: pointer;
+      transition: background var(--transition), transform var(--transition);
+      flex-shrink: 0;
+    }
+
+    .dot:hover { transform: scale(1.3); }
+    .dot.active { background: var(--gold); transform: scale(1.2); }
+
+    /* ── Fixed nav footer ───────────────────────────────────────────────── */
+    .nav-footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(28,49,69,.97);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-top: 1px solid rgba(255,255,255,.08);
+      z-index: 150;
+      padding: .75rem 1.5rem;
+    }
+
+    .nav-inner {
+      max-width: 860px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .nav-btn {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,.2);
+      color: #fff;
+      padding: .55rem 1.25rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: .88rem;
+      font-family: inherit;
+      display: flex;
+      align-items: center;
+      gap: .4rem;
+      white-space: nowrap;
+      transition: background var(--transition), border-color var(--transition), transform .1s;
+      flex-shrink: 0;
+    }
+
+    .nav-btn:hover:not(:disabled) {
+      background: rgba(255,255,255,.1);
+      border-color: var(--gold-light);
+      transform: translateY(-1px);
+    }
+
+    .nav-btn:active:not(:disabled) { transform: translateY(0); }
+
+    .nav-btn:disabled {
+      opacity: .3;
+      cursor: not-allowed;
+    }
+
+    .nav-btn .arrow { font-size: 1rem; }
+
+    .nav-center {
+      flex: 1;
+      text-align: center;
+    }
+
+    .nav-counter {
+      font-size: .82rem;
+      color: rgba(255,255,255,.7);
+      line-height: 1.4;
+    }
+
+    .nav-counter strong {
+      color: var(--gold-light);
+      font-family: 'Amiri', serif;
+      font-size: .98rem;
+    }
+
+    /* ── Loading / Error ────────────────────────────────────────────────── */
+    .state-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 40vh;
+      gap: 1rem;
+      color: var(--text-muted);
+    }
+
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid var(--border);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Language toggle ────────────────────────────────────────────────── */
+    .lang-toggle {
+      display: flex;
+      border: 1px solid rgba(255,255,255,.2);
+      border-radius: 7px;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .lang-btn {
+      background: transparent;
+      border: none;
+      color: rgba(255,255,255,.55);
+      padding: .35rem .75rem;
+      font-size: .78rem;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background var(--transition), color var(--transition);
+      white-space: nowrap;
+    }
+
+    .lang-btn.active { background: var(--gold); color: #fff; }
+    .lang-btn:not(.active):hover { background: rgba(255,255,255,.1); color: #fff; }
+
+    /* ── English mode overrides (applied via .en-mode on #main) ─────────── */
+    .en-mode { direction: ltr; }
+
+    .en-mode .arabic-body,
+    .en-mode .urdu-body {
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 1.05rem;
+      line-height: 1.9;
+      direction: ltr;
+      text-align: left;
+    }
+
+    .en-mode .fn-item {
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: .9rem;
+      line-height: 1.8;
+      direction: ltr;
+    }
+
+    .en-mode .chapter-card  { flex-direction: row-reverse; justify-content: flex-end; }
+    .en-mode .section-label { flex-direction: row-reverse; }
+    .en-mode .section-label::before { margin-left: .75rem; margin-right: 0; }
+    .en-mode .hadith-header { flex-direction: row; }
+
+    /* Arabic source text is always RTL regardless of UI language */
+    .arabic-source {
+      font-family: 'Amiri', serif;
+      font-size: 1.22rem;
+      line-height: 2.3;
+      color: var(--navy);
+      direction: rtl !important;
+      text-align: justify;
+    }
+
+    /* ── Scrollbar ──────────────────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+    /* ── Responsive ─────────────────────────────────────────────────────── */
+    @media (max-width: 640px) {
+      .main { padding: 1.25rem 1rem 7rem; }
+      .chapter-card { padding: 1.5rem 1.25rem; }
+      .chapter-title { font-size: 1.45rem; }
+      .arabic-body { font-size: 1.08rem; }
+      .hadith-section { padding: 1.2rem 1.25rem; }
+      .fn-item { padding: .75rem 1.25rem; }
+      #chapterSelect { max-width: 100%; }
+      .brand-sub { display: none; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ══ Header ══════════════════════════════════════════════════════════ -->
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="site-brand">
+        <span class="brand-title">علمُ النبی</span>
+        <span class="brand-sub">جاوید احمد غامدی</span>
+      </div>
+      <div class="header-controls">
+        <span class="control-label" id="chapterLabel">باب:</span>
+        <select id="chapterSelect" aria-label="باب منتخب کریں"></select>
+      </div>
+      <div class="lang-toggle" role="group" aria-label="Language">
+        <button id="btnUr" class="lang-btn active" onclick="setLang('ur')">اردو</button>
+        <button id="btnEn" class="lang-btn"        onclick="setLang('en')">EN</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ══ Main ════════════════════════════════════════════════════════════ -->
+  <main class="main" id="main">
+    <div class="state-screen" id="loadingScreen">
+      <div class="spinner"></div>
+      <span>ڈیٹا لوڈ ہو رہا ہے…</span>
+    </div>
+  </main>
+
+  <!-- ══ Nav footer ══════════════════════════════════════════════════════ -->
+  <footer class="nav-footer" id="navFooter" style="display:none">
+    <div class="nav-inner">
+      <button class="nav-btn" id="btnPrev" onclick="navigate(-1)" aria-label="Previous hadith">
+        <span class="arrow" id="arrowPrev">›</span> <span id="labelPrev">پچھلی</span>
+      </button>
+      <div class="nav-center">
+        <div class="nav-counter" id="navCounter"></div>
+        <div class="progress-track">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+      </div>
+      <button class="nav-btn" id="btnNext" onclick="navigate(1)" aria-label="Next hadith">
+        <span id="labelNext">اگلی</span> <span class="arrow" id="arrowNext">‹</span>
+      </button>
+    </div>
+  </footer>
+
+  <script>
+    // ── State ─────────────────────────────────────────────────────────────
+    let DATA      = [];
+    let chapIdx   = 0;
+    let hadithIdx = 0;
+    let introExpanded = false;
+    let arabicFnOpen  = true;
+    let lang          = 'ur';   // 'ur' | 'en'
+
+    // ── Urdu numerals ──────────────────────────────────────────────────────
+    const U = '۰۱۲۳۴۵۶۷۸۹';
+    function toUrdu(n) {
+      return String(n).replace(/\d/g, d => U[d]);
+    }
+
+    // ── Fetch data ─────────────────────────────────────────────────────────
+    async function init() {
+      try {
+        const resp = await fetch('./Ilm_extracted.json');
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        DATA = await resp.json();
+        buildChapterSelect();
+        render();
+        document.getElementById('navFooter').style.display = '';
+      } catch (err) {
+        document.getElementById('loadingScreen').innerHTML =
+          `<p style="color:#c0392b;font-size:.95rem">
+            خطا: ڈیٹا لوڈ نہ ہو سکا۔<br>
+            <small style="color:#888;font-size:.8rem">${err.message}</small><br><br>
+            <small style="color:#888;font-size:.75rem;line-height:1.8">
+              یہ صفحہ مقامی سرور کی ضرورت رکھتا ہے۔<br>
+              ٹرمینل میں چلائیں: <code style="background:#f0f0f0;padding:2px 6px;border-radius:3px;direction:ltr;unicode-bidi:embed">python3 -m http.server 8080</code><br>
+              پھر کھولیں: <code style="background:#f0f0f0;padding:2px 6px;border-radius:3px;direction:ltr;unicode-bidi:embed">http://localhost:8080</code>
+            </small>
+          </p>`;
+      }
+    }
+
+    // ── Language switch ────────────────────────────────────────────────────
+    function setLang(l) {
+      lang = l;
+      document.getElementById('btnUr').classList.toggle('active', l === 'ur');
+      document.getElementById('btnEn').classList.toggle('active', l === 'en');
+      // Rebuild chapter options with correct language titles
+      const sel = document.getElementById('chapterSelect');
+      Array.from(sel.options).forEach((opt, i) => {
+        const ch = DATA[i].chapter;
+        opt.textContent = l === 'en'
+          ? `${i + 1}. ${ch.title_en || ch.title_ur}`
+          : `${toUrdu(i + 1)}. ${ch.title_ur}`;
+      });
+      sel.style.fontFamily = l === 'en' ? 'Georgia, serif' : "'Noto Nastaliq Urdu', serif";
+      sel.style.direction  = l === 'en' ? 'ltr' : 'rtl';
+      document.getElementById('chapterLabel').textContent = l === 'en' ? 'Chapter:' : 'باب:';
+      introExpanded = false;
+      arabicFnOpen  = true;
+      render();
+    }
+
+    // ── Build chapter <select> ─────────────────────────────────────────────
+    function buildChapterSelect() {
+      const sel = document.getElementById('chapterSelect');
+      DATA.forEach((ch, i) => {
+        const opt = document.createElement('option');
+        opt.value = i;
+        opt.textContent = `${toUrdu(i + 1)}. ${ch.chapter.title_ur}`;
+        sel.appendChild(opt);
+      });
+      sel.addEventListener('change', () => {
+        chapIdx   = parseInt(sel.value);
+        hadithIdx = 0;
+        introExpanded = false;
+        arabicFnOpen  = true;
+        render();
+      });
+    }
+
+    // ── Urdu digit → ASCII digit (for building HTML ids) ──────────────────
+    function toAscii(s) {
+      const map = {'۰':'0','۱':'1','۲':'2','۳':'3','۴':'4',
+                   '۵':'5','۶':'6','۷':'7','۸':'8','۹':'9'};
+      return String(s).replace(/[۰-۹]/g, d => map[d] || d);
+    }
+
+    // ── Format plain text (newlines only) ─────────────────────────────────
+    function fmt(text) {
+      return (text || '').replace(/\n/g, '<br>');
+    }
+
+    // ── Arabic text: wrap every digit group as a clickable <sup> ref ──────
+    // Classical Arabic hadith prose contains no standalone digits — any digit
+    // appearing in arabic_text is a footnote reference marker.
+    function fmtArabic(text) {
+      return (text || '')
+        .replace(/([۰-۹\d]{1,2})(?![۰-۹\d])/g, (_, n) => {
+          const id = `fn-ar-${toAscii(n)}`;
+          return `<sup><a class="ref-link" href="#${id}" ` +
+                 `onclick="highlightFn(event,'${id}')">${n}</a></sup>`;
+        })
+        .replace(/\n/g, '<br>');
+    }
+
+    // ── Urdu translation: wrap N؎ patterns as clickable <sup> refs ────────
+    function fmtUrdu(text) {
+      return (text || '')
+        .replace(/([۰-۹\d]{1,2})؎/g, (_, n) => {
+          const id = `fn-ur-${toAscii(n)}`;
+          return `<sup><a class="ref-link" href="#${id}" ` +
+                 `onclick="highlightFn(event,'${id}')">${n}؎</a></sup>`;
+        })
+        .replace(/\n/g, '<br>');
+    }
+
+    // ── English translation: wrap bare ASCII digit refs as clickable <sup> ─
+    // en_translation has refs as bare ASCII digits (1, 2 …) converted from Urdu.
+    // They appear immediately after punctuation or at word boundaries.
+    // We match 1–2 digit sequences not adjacent to other digits or letters,
+    // then decide type by checking if a matching urdu_refs_footnote exists.
+    function fmtEnglish(text, h) {
+      const urduFnCount = (h.urdu_refs_footnotes || []).length;
+      return (text || '')
+        .replace(/(?<![a-zA-Z\d])(\d{1,2})(?!\d)/g, (match, n) => {
+          const num = parseInt(n);
+          // Route to Type A (fn-ur-N) if within urdu fn count, else Type B (fn-ar-N)
+          const id = num <= urduFnCount && urduFnCount > 0
+            ? `fn-ur-${n}`
+            : `fn-ar-${n}`;
+          return `<sup><a class="ref-link" href="#${id}" ` +
+                 `onclick="highlightFn(event,'${id}')">${n}</a></sup>`;
+        })
+        .replace(/\n/g, '<br>');
+    }
+
+    // ── Main render ────────────────────────────────────────────────────────
+    function render() {
+      const ch      = DATA[chapIdx];
+      const entries = ch.hadith_entries;
+      const h       = entries[hadithIdx];
+      const total   = entries.length;
+      const isEn    = lang === 'en';
+
+      // Sync select
+      document.getElementById('chapterSelect').value = chapIdx;
+
+      // Apply/remove English layout class on main
+      document.getElementById('main').classList.toggle('en-mode', isEn);
+
+      // ── Chapter label (compact) ──────────────────────────────────
+      const chapterTitle = isEn
+        ? (ch.chapter.title_en || ch.chapter.title_ur)
+        : ch.chapter.title_ur;
+      const introText = isEn
+        ? (ch.chapter.intro_en || ch.chapter.intro_ur || '')
+        : (ch.chapter.intro_ur || '');
+      const hasIntro = introText.trim();
+      const chMeta   = isEn
+        ? `Ch. ${chapIdx + 1} / ${DATA.length}`
+        : `باب ${toUrdu(chapIdx + 1)}/${toUrdu(DATA.length)}`;
+
+      let chapHtml = `
+        <div class="chapter-card">
+          <span class="chapter-meta">${chMeta}</span>
+          <span class="chapter-title">${chapterTitle}</span>
+          ${hasIntro ? `
+            <button class="intro-btn" onclick="toggleIntro()">
+              ${introExpanded
+                ? (isEn ? 'Hide intro' : 'تعارف چھپائیں')
+                : (isEn ? 'Intro'      : 'تعارف')}
+            </button>
+          ` : ''}
+        </div>
+        ${hasIntro && introExpanded ? `
+          <div class="chapter-intro-wrap">
+            <div class="chapter-intro">${fmt(introText)}</div>
+            <button class="intro-close" onclick="toggleIntro()">
+              ${isEn ? '▲ Close' : '▲ بند کریں'}
+            </button>
+          </div>
+        ` : ''}
+      `;
+
+      // ── Hadith card ──────────────────────────────────────────────
+      const hadithNumLabel = isEn ? 'Hadith' : 'حدیث';
+      const hadithNumDisp  = isEn ? h.number : toUrdu(h.number);
+      const hadithPosDisp  = isEn
+        ? `${hadithIdx + 1} / ${total}`
+        : `${toUrdu(hadithIdx + 1)} / ${toUrdu(total)}`;
+
+      // Arabic source text always RTL, always Amiri — use .arabic-source class
+      const arabicSection = `
+        <div class="hadith-section">
+          <div class="section-label">${isEn ? 'Arabic Text' : 'متن عربی'}</div>
+          <div class="arabic-source">${fmtArabic(h.arabic_text_en || h.arabic_text)}</div>
+        </div>
+      `;
+
+      // Translation section — Urdu or English
+      const translationBody = isEn
+        ? fmtEnglish(h.en_translation || '', h)
+        : fmtUrdu(h.urdu_translation);
+      const translationLabel = isEn ? 'English Translation' : 'اردو ترجمہ';
+
+      let hadithHtml = `
+        <div class="hadith-card">
+          <div class="hadith-header">
+            <div class="hadith-num">
+              <span class="hadith-num-label">${hadithNumLabel}</span>
+              ${hadithNumDisp}
+            </div>
+            <div class="hadith-pos">${hadithPosDisp}</div>
+          </div>
+          ${arabicSection}
+          <div class="hadith-section">
+            <div class="section-label">${translationLabel}</div>
+            <div class="${isEn ? 'urdu-body' : 'urdu-body'}">${translationBody}</div>
+          </div>
+        </div>
+      `;
+
+      // ── Explanatory footnotes (Type A) ───────────────────────────
+      const urduFns = isEn
+        ? (h.en_refs_footnotes   || [])
+        : (h.urdu_refs_footnotes || []);
+
+      let urduFnHtml = '';
+      if (urduFns.length > 0) {
+        const items = urduFns.map(fn => {
+          // Urdu: leading N؎  |  English: leading "N. "
+          const m = isEn
+            ? fn.match(/^(\d{1,2})\.\s/)
+            : fn.match(/^([۰-۹\d]{1,2})\s*؎/);
+          const id = m ? ` id="fn-ur-${toAscii(m[1])}"` : '';
+          return `<div class="fn-item fn-urdu"${id}>${fmt(fn)}</div>`;
+        }).join('');
+        const label = isEn ? 'Notes' : 'حواشی';
+        const badge = isEn ? urduFns.length : toUrdu(urduFns.length);
+        urduFnHtml = `
+          <div class="fn-card">
+            <div class="fn-group-header" style="cursor:default">
+              <div class="fn-group-title">
+                ${label}
+                <span class="fn-badge">${badge}</span>
+              </div>
+            </div>
+            <div class="fn-body" id="urduFnBody">${items}</div>
+          </div>
+        `;
+      }
+
+      // ── Source footnotes (Type B) ────────────────────────────────
+      const arabicFns = isEn
+        ? (h.en_arabic_footnotes || [])
+        : (h.arabic_footnotes    || []);
+
+      let arabicFnHtml = '';
+      if (arabicFns.length > 0) {
+        const items = arabicFns.map(fn => {
+          // Urdu: leading N۔  |  English: leading "N. "
+          const m = isEn
+            ? fn.match(/^(\d{1,2})\.\s/)
+            : fn.match(/^([۰-۹\d]{1,2})\s*[۔.]/);
+          const id = m ? ` id="fn-ar-${toAscii(m[1])}"` : '';
+          return `<div class="fn-item fn-arabic"${id}>${fmt(fn)}</div>`;
+        }).join('');
+        const label = isEn ? 'Source Notes' : 'متن کے حواشی';
+        const badge = isEn ? arabicFns.length : toUrdu(arabicFns.length);
+        arabicFnHtml = `
+          <div class="fn-card">
+            <div class="fn-group-header" onclick="toggleArabicFn()" role="button" tabindex="0">
+              <div class="fn-group-title">
+                ${label}
+                <span class="fn-badge">${badge}</span>
+              </div>
+              <span class="fn-chevron${arabicFnOpen ? ' open' : ''}" id="arabicFnChev">▼</span>
+            </div>
+            <div class="fn-body${arabicFnOpen ? '' : ' collapsed'}" id="arabicFnBody">${items}</div>
+          </div>
+        `;
+      }
+
+      // ── Assemble ─────────────────────────────────────────────────
+      document.getElementById('main').innerHTML =
+        chapHtml + hadithHtml + urduFnHtml + arabicFnHtml;
+
+      // Set Arabic footnotes max-height for animation
+      requestAnimationFrame(() => {
+        const body = document.getElementById('arabicFnBody');
+        if (body && arabicFnOpen) {
+          body.style.maxHeight = body.scrollHeight + 'px';
+        }
+      });
+
+      // ── Nav footer ───────────────────────────────────────────────
+      const isFirst = chapIdx === 0 && hadithIdx === 0;
+      const isLast  = chapIdx === DATA.length - 1 && hadithIdx === total - 1;
+      document.getElementById('btnPrev').disabled = isFirst;
+      document.getElementById('btnNext').disabled = isLast;
+
+      const pct = total > 1 ? ((hadithIdx / (total - 1)) * 100).toFixed(1) : 100;
+      document.getElementById('progressFill').style.width = pct + '%';
+      document.getElementById('navCounter').innerHTML = isEn
+        ? `<strong>${hadithIdx + 1}</strong> / ${total}`
+        : `<strong>${toUrdu(hadithIdx + 1)}</strong> / ${toUrdu(total)}`;
+
+      // ── Nav button labels ─────────────────────────────────────────
+      document.getElementById('labelPrev').textContent = isEn ? 'Prev' : 'پچھلی';
+      document.getElementById('labelNext').textContent = isEn ? 'Next' : 'اگلی';
+      document.getElementById('arrowPrev').textContent = isEn ? '‹' : '›';
+      document.getElementById('arrowNext').textContent = isEn ? '›' : '‹';
+
+      // ── Scroll to top ─────────────────────────────────────────────
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ── Navigate ───────────────────────────────────────────────────────────
+    function navigate(dir) {
+      const entries = DATA[chapIdx].hadith_entries;
+      if (dir > 0) {
+        if (hadithIdx < entries.length - 1) {
+          hadithIdx++;
+        } else if (chapIdx < DATA.length - 1) {
+          chapIdx++;
+          hadithIdx = 0;
+          introExpanded = false;
+        }
+      } else {
+        if (hadithIdx > 0) {
+          hadithIdx--;
+        } else if (chapIdx > 0) {
+          chapIdx--;
+          hadithIdx = DATA[chapIdx].hadith_entries.length - 1;
+          introExpanded = false;
+        }
+      }
+      arabicFnOpen = true;
+      render();
+    }
+
+    // ── Toggle intro ───────────────────────────────────────────────────────
+    function toggleIntro() {
+      introExpanded = !introExpanded;
+      render();
+    }
+
+    // ── Toggle Arabic footnotes ────────────────────────────────────────────
+    function toggleArabicFn() {
+      arabicFnOpen = !arabicFnOpen;
+      const body  = document.getElementById('arabicFnBody');
+      const chev  = document.getElementById('arabicFnChev');
+      if (!body) return;
+      if (arabicFnOpen) {
+        body.style.maxHeight = body.scrollHeight + 'px';
+        body.classList.remove('collapsed');
+        chev && chev.classList.add('open');
+      } else {
+        body.style.maxHeight = body.scrollHeight + 'px'; // set explicit before collapse
+        requestAnimationFrame(() => {
+          body.style.maxHeight = '0';
+          body.classList.add('collapsed');
+          chev && chev.classList.remove('open');
+        });
+      }
+    }
+
+    // ── Footnote ref click → scroll + highlight ───────────────────────────
+    function highlightFn(event, id) {
+      event.preventDefault();
+      const el = document.getElementById(id);
+      if (!el) return;
+      // Expand Arabic footnotes if they are collapsed and the target is inside
+      if (id.startsWith('fn-ar-') && !arabicFnOpen) {
+        arabicFnOpen = true;
+        const body = document.getElementById('arabicFnBody');
+        const chev = document.getElementById('arabicFnChev');
+        if (body) { body.style.maxHeight = body.scrollHeight + 'px'; body.classList.remove('collapsed'); }
+        if (chev) chev.classList.add('open');
+      }
+      // Slight delay so collapsed section can open before scrolling
+      setTimeout(() => {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.classList.remove('fn-highlight');
+        void el.offsetWidth; // force reflow to restart animation
+        el.classList.add('fn-highlight');
+      }, arabicFnOpen ? 0 : 320);
+    }
+
+    // ── Keyboard navigation ────────────────────────────────────────────────
+    document.addEventListener('keydown', e => {
+      if (e.target.tagName === 'SELECT' || e.target.tagName === 'INPUT') return;
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') navigate(1);
+      if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   navigate(-1);
+    });
+
+    // ── Start ──────────────────────────────────────────────────────────────
+    init();
+  </script>
+</body>
+</html>
