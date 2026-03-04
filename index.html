@@ -702,6 +702,8 @@
     // ── Language switch ────────────────────────────────────────────────────
     function setLang(l) {
       lang = l;
+      document.documentElement.dir  = l === 'en' ? 'ltr' : 'rtl';
+      document.documentElement.lang = l === 'en' ? 'en'  : 'ur';
       document.getElementById('btnUr').classList.toggle('active', l === 'ur');
       document.getElementById('btnEn').classList.toggle('active', l === 'en');
       // Rebuild chapter options with correct language titles
