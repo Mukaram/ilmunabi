@@ -40,7 +40,6 @@
       font-family: 'Noto Nastaliq Urdu', 'Arabic Typesetting', serif;
       background: var(--bg);
       color: var(--text);
-      direction: rtl;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
@@ -704,6 +703,7 @@
       lang = l;
       document.documentElement.dir  = l === 'en' ? 'ltr' : 'rtl';
       document.documentElement.lang = l === 'en' ? 'en'  : 'ur';
+      window.scrollTo(0, 0);
       document.getElementById('btnUr').classList.toggle('active', l === 'ur');
       document.getElementById('btnEn').classList.toggle('active', l === 'en');
       // Rebuild chapter options with correct language titles
