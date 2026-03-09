@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ur" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -632,8 +632,8 @@
         <select id="chapterSelect" aria-label="باب منتخب کریں"></select>
       </div>
       <div class="lang-toggle" role="group" aria-label="Language">
-        <button id="btnUr" class="lang-btn active" onclick="setLang('ur')">اردو</button>
-        <button id="btnEn" class="lang-btn"        onclick="setLang('en')">EN</button>
+        <button id="btnUr" class="lang-btn"        onclick="setLang('ur')">اردو</button>
+        <button id="btnEn" class="lang-btn active" onclick="setLang('en')">EN</button>
       </div>
     </div>
   </header>
@@ -671,7 +671,7 @@
     let hadithIdx = 0;
     let introExpanded = false;
     let arabicFnOpen  = true;
-    let lang          = 'ur';   // 'ur' | 'en'
+    let lang          = 'en';   // 'ur' | 'en'
 
     // ── Urdu numerals ──────────────────────────────────────────────────────
     const U = '۰۱۲۳۴۵۶۷۸۹';
@@ -686,7 +686,7 @@
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         DATA = await resp.json();
         buildChapterSelect();
-        render();
+        setLang(lang);
         document.getElementById('navFooter').style.display = '';
       } catch (err) {
         document.getElementById('loadingScreen').innerHTML =
@@ -754,7 +754,9 @@
 
     // ── Format plain text (newlines only) ─────────────────────────────────
     function fmt(text) {
-      return (text || '').replace(/\n/g, '<br>');
+      return (text || '')
+        .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+        .replace(/\n/g, '<br>');
     }
 
     // ── Arabic text: wrap every digit group as a clickable <sup> ref ──────
