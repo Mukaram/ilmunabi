@@ -595,6 +595,30 @@
       text-align: justify;
     }
 
+    /* ── Roman mode overrides (applied via .ro-mode on #main) ───────────── */
+    .ro-mode { direction: ltr; }
+
+    .ro-mode .arabic-body,
+    .ro-mode .urdu-body {
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 1.05rem;
+      line-height: 1.9;
+      direction: ltr;
+      text-align: left;
+    }
+
+    .ro-mode .fn-item {
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: .9rem;
+      line-height: 1.8;
+      direction: ltr;
+    }
+
+    .ro-mode .chapter-card  { flex-direction: row-reverse; justify-content: flex-end; }
+    .ro-mode .section-label { flex-direction: row-reverse; }
+    .ro-mode .section-label::before { margin-left: .75rem; margin-right: 0; }
+    .ro-mode .hadith-header { flex-direction: row; }
+
     /* ── Scrollbar ──────────────────────────────────────────────────────── */
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: var(--bg); }
@@ -634,6 +658,7 @@
       <div class="lang-toggle" role="group" aria-label="Language">
         <button id="btnUr" class="lang-btn"        onclick="setLang('ur')">اردو</button>
         <button id="btnEn" class="lang-btn active" onclick="setLang('en')">EN</button>
+        <button id="btnRo" class="lang-btn"        onclick="setLang('ro')">Roman</button>
       </div>
     </div>
   </header>
@@ -705,23 +730,25 @@
     // ── Language switch ────────────────────────────────────────────────────
     function setLang(l) {
       lang = l;
-      document.documentElement.dir  = l === 'en' ? 'ltr' : 'rtl';
-      document.documentElement.lang = l === 'en' ? 'en'  : 'ur';
-      document.body.style.direction  = l === 'en' ? 'ltr' : 'rtl';
+      const isRtl = l === 'ur';
+      document.documentElement.dir  = isRtl ? 'rtl' : 'ltr';
+      document.documentElement.lang = l === 'ur' ? 'ur' : l === 'ro' ? 'ur-Latn' : 'en';
+      document.body.style.direction  = isRtl ? 'rtl' : 'ltr';
       window.scrollTo(0, 0);
       document.getElementById('btnUr').classList.toggle('active', l === 'ur');
       document.getElementById('btnEn').classList.toggle('active', l === 'en');
+      document.getElementById('btnRo').classList.toggle('active', l === 'ro');
       // Rebuild chapter options with correct language titles
       const sel = document.getElementById('chapterSelect');
       Array.from(sel.options).forEach((opt, i) => {
         const ch = DATA[i].chapter;
-        opt.textContent = l === 'en'
-          ? `${i + 1}. ${ch.title_en || ch.title_ur}`
-          : `${toUrdu(i + 1)}. ${ch.title_ur}`;
+        opt.textContent = isRtl
+          ? `${toUrdu(i + 1)}. ${ch.title_ur}`
+          : `${i + 1}. ${ch.title_en || ch.title_ur}`;
       });
-      sel.style.fontFamily = l === 'en' ? 'Georgia, serif' : "'Noto Nastaliq Urdu', serif";
-      sel.style.direction  = l === 'en' ? 'ltr' : 'rtl';
-      document.getElementById('chapterLabel').textContent = l === 'en' ? 'Chapter:' : 'باب:';
+      sel.style.fontFamily = isRtl ? "'Noto Nastaliq Urdu', serif" : 'Georgia, serif';
+      sel.style.direction  = isRtl ? 'rtl' : 'ltr';
+      document.getElementById('chapterLabel').textContent = isRtl ? 'باب:' : 'Chapter:';
       introExpanded = false;
       arabicFnOpen  = true;
       render();
@@ -772,6 +799,17 @@
         .replace(/\n/g, '<br>');
     }
 
+    // ── Roman transliteration: wrap N* patterns as clickable <sup> refs ───
+    function fmtRoman(text) {
+      return (text || '')
+        .replace(/(\d{1,2})\*/g, (_, n) => {
+          const id = `fn-ur-${n}`;
+          return `<sup><a class="ref-link" href="#${id}" ` +
+                 `onclick="highlightFn(event,'${id}')">${n}*</a></sup>`;
+        })
+        .replace(/\n/g, '<br>');
+    }
+
     // ── Urdu translation: wrap N؎ patterns as clickable <sup> refs ────────
     function fmtUrdu(text) {
       return (text || '')
@@ -810,24 +848,29 @@
       const h       = entries[hadithIdx];
       const total   = entries.length;
       const isEn    = lang === 'en';
+      const isRo    = lang === 'ro';
+      const isUr    = lang === 'ur';
 
       // Sync select
       document.getElementById('chapterSelect').value = chapIdx;
 
-      // Apply/remove English layout class on main
+      // Apply/remove layout classes on main
       document.getElementById('main').classList.toggle('en-mode', isEn);
+      document.getElementById('main').classList.toggle('ro-mode', isRo);
 
       // ── Chapter label (compact) ──────────────────────────────────
-      const chapterTitle = isEn
-        ? (ch.chapter.title_en || ch.chapter.title_ur)
-        : ch.chapter.title_ur;
+      const chapterTitle = isUr
+        ? ch.chapter.title_ur
+        : (ch.chapter.title_en || ch.chapter.title_ur);
       const introText = isEn
         ? (ch.chapter.intro_en || ch.chapter.intro_ur || '')
-        : (ch.chapter.intro_ur || '');
+        : isRo
+          ? (ch.chapter.intro_ur_roman || ch.chapter.intro_ur || '')
+          : (ch.chapter.intro_ur || '');
       const hasIntro = introText.trim();
-      const chMeta   = isEn
-        ? `Ch. ${chapIdx + 1} / ${DATA.length}`
-        : `باب ${toUrdu(chapIdx + 1)}/${toUrdu(DATA.length)}`;
+      const chMeta   = isUr
+        ? `باب ${toUrdu(chapIdx + 1)}/${toUrdu(DATA.length)}`
+        : `Ch. ${chapIdx + 1} / ${DATA.length}`;
 
       let chapHtml = `
         <div class="chapter-card">
@@ -866,11 +909,13 @@
         </div>
       `;
 
-      // Translation section — Urdu or English
+      // Translation section — Urdu, English, or Roman
       const translationBody = isEn
         ? fmtEnglish(h.en_translation || '', h)
-        : fmtUrdu(h.urdu_translation);
-      const translationLabel = isEn ? 'English Translation' : 'اردو ترجمہ';
+        : isRo
+          ? fmtRoman(h.urdu_translation_roman || '')
+          : fmtUrdu(h.urdu_translation);
+      const translationLabel = isEn ? 'English Translation' : isRo ? 'Roman Transliteration' : 'اردو ترجمہ';
 
       let hadithHtml = `
         <div class="hadith-card">
@@ -891,21 +936,26 @@
 
       // ── Explanatory footnotes (Type A) ───────────────────────────
       const urduFns = isEn
-        ? (h.en_refs_footnotes   || [])
-        : (h.urdu_refs_footnotes || []);
+        ? (h.en_refs_footnotes        || [])
+        : isRo
+          ? (h.urdu_refs_footnotes_roman || [])
+          : (h.urdu_refs_footnotes      || []);
 
       let urduFnHtml = '';
       if (urduFns.length > 0) {
         const items = urduFns.map(fn => {
-          // Urdu: leading N؎  |  English: leading "N. "
+          // Urdu: leading N؎  |  Roman: leading N*  |  English: leading "N. "
           const m = isEn
             ? fn.match(/^(\d{1,2})\.\s/)
-            : fn.match(/^([۰-۹\d]{1,2})\s*؎/);
+            : isRo
+              ? fn.match(/^(\d{1,2})\*/)
+              : fn.match(/^([۰-۹\d]{1,2})\s*؎/);
           const id = m ? ` id="fn-ur-${toAscii(m[1])}"` : '';
-          return `<div class="fn-item fn-urdu"${id}>${fmt(fn)}</div>`;
+          const cls = isUr ? 'fn-item fn-urdu' : 'fn-item';
+          return `<div class="${cls}"${id}>${fmt(fn)}</div>`;
         }).join('');
-        const label = isEn ? 'Notes' : 'حواشی';
-        const badge = isEn ? urduFns.length : toUrdu(urduFns.length);
+        const label = isUr ? 'حواشی' : 'Notes';
+        const badge = isUr ? toUrdu(urduFns.length) : urduFns.length;
         urduFnHtml = `
           <div class="fn-card">
             <div class="fn-group-header" style="cursor:default">
@@ -954,8 +1004,11 @@
       document.getElementById('main').innerHTML =
         chapHtml + hadithHtml + urduFnHtml + arabicFnHtml;
 
-      // Set Arabic footnotes max-height for animation
+      // Set footnote body max-heights so overflow:hidden doesn't collapse them
       requestAnimationFrame(() => {
+        const urduBody = document.getElementById('urduFnBody');
+        if (urduBody) urduBody.style.maxHeight = urduBody.scrollHeight + 'px';
+
         const body = document.getElementById('arabicFnBody');
         if (body && arabicFnOpen) {
           body.style.maxHeight = body.scrollHeight + 'px';
@@ -970,15 +1023,15 @@
 
       const pct = total > 1 ? ((hadithIdx / (total - 1)) * 100).toFixed(1) : 100;
       document.getElementById('progressFill').style.width = pct + '%';
-      document.getElementById('navCounter').innerHTML = isEn
-        ? `<strong>${hadithIdx + 1}</strong> / ${total}`
-        : `<strong>${toUrdu(hadithIdx + 1)}</strong> / ${toUrdu(total)}`;
+      document.getElementById('navCounter').innerHTML = isUr
+        ? `<strong>${toUrdu(hadithIdx + 1)}</strong> / ${toUrdu(total)}`
+        : `<strong>${hadithIdx + 1}</strong> / ${total}`;
 
       // ── Nav button labels ─────────────────────────────────────────
-      document.getElementById('labelPrev').textContent = isEn ? 'Prev' : 'پچھلی';
-      document.getElementById('labelNext').textContent = isEn ? 'Next' : 'اگلی';
-      document.getElementById('arrowPrev').textContent = isEn ? '‹' : '›';
-      document.getElementById('arrowNext').textContent = isEn ? '›' : '‹';
+      document.getElementById('labelPrev').textContent = isUr ? 'پچھلی' : 'Prev';
+      document.getElementById('labelNext').textContent = isUr ? 'اگلی'  : 'Next';
+      document.getElementById('arrowPrev').textContent = isUr ? '›' : '‹';
+      document.getElementById('arrowNext').textContent = isUr ? '‹' : '›';
 
       // ── Scroll to top ─────────────────────────────────────────────
       window.scrollTo({ top: 0, behavior: 'smooth' });
