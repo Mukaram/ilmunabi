@@ -397,13 +397,13 @@
       border-bottom: 1px dashed var(--border);
       line-height: 2.1;
       color: var(--text-mid);
-      font-size: .9rem;
+      font-size: 1.1rem;
       direction: rtl;
       white-space: pre-wrap;
     }
 
     .fn-item:last-child { border-bottom: none; }
-    .fn-item.fn-arabic { font-family: 'Amiri', serif; font-size: .95rem; }
+    .fn-item.fn-arabic { font-family: 'Amiri', serif; font-size: 1.1rem; }
     .fn-item.fn-urdu   { font-family: 'Noto Nastaliq Urdu', serif; }
 
     /* ── Progress bar ───────────────────────────────────────────────────── */
@@ -575,7 +575,7 @@
 
     .en-mode .fn-item {
       font-family: Georgia, 'Times New Roman', serif;
-      font-size: .9rem;
+      font-size: 1.1rem;
       line-height: 1.8;
       direction: ltr;
     }
@@ -609,7 +609,7 @@
 
     .ro-mode .fn-item {
       font-family: Georgia, 'Times New Roman', serif;
-      font-size: .9rem;
+      font-size: 1.1rem;
       line-height: 1.8;
       direction: ltr;
     }
@@ -971,21 +971,24 @@
 
       // ── Source footnotes (Type B) ────────────────────────────────
       const arabicFns = isEn
-        ? (h.en_arabic_footnotes || [])
-        : (h.arabic_footnotes    || []);
+        ? (h.en_arabic_footnotes     || [])
+        : isRo
+          ? (h.arabic_footnotes_roman || [])
+          : (h.arabic_footnotes       || []);
 
       let arabicFnHtml = '';
       if (arabicFns.length > 0) {
         const items = arabicFns.map(fn => {
-          // Urdu: leading N۔  |  English: leading "N. "
-          const m = isEn
+          // Urdu: leading N۔  |  English/Roman: leading "N. "
+          const m = isEn || isRo
             ? fn.match(/^(\d{1,2})\.\s/)
             : fn.match(/^([۰-۹\d]{1,2})\s*[۔.]/);
           const id = m ? ` id="fn-ar-${toAscii(m[1])}"` : '';
-          return `<div class="fn-item fn-arabic"${id}>${fmt(fn)}</div>`;
+          const cls = isUr ? 'fn-item fn-arabic' : 'fn-item';
+          return `<div class="${cls}"${id}>${fmt(fn)}</div>`;
         }).join('');
-        const label = isEn ? 'Source Notes' : 'متن کے حواشی';
-        const badge = isEn ? arabicFns.length : toUrdu(arabicFns.length);
+        const label = isEn || isRo ? 'Source Notes' : 'متن کے حواشی';
+        const badge = isEn || isRo ? arabicFns.length : toUrdu(arabicFns.length);
         arabicFnHtml = `
           <div class="fn-card">
             <div class="fn-group-header" onclick="toggleArabicFn()" role="button" tabindex="0">
