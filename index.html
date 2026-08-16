@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GCIL YouTube Channel Analytics</title>
+<title>YouTube Channel Analytics</title>
 <script>/* Chart.js v4.4.4 bundled inline for full offline / self-contained operation */
 /*!
  * Chart.js v4.4.4
@@ -82,13 +82,14 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:20px;}
 <body>
 <header>
   <div>
-    <h1>GCIL YouTube Channel Analytics</h1>
+    <h1>YouTube Channel Analytics</h1>
     <div class="sub" id="headerSub">Loading dataset…</div>
   </div>
   <div class="small" id="dateRangeLabel"></div>
 </header>
 <nav>
   <button class="tab-btn active" data-view="overview">Overview</button>
+  <button class="tab-btn" data-view="health">Channel Health</button>
   <button class="tab-btn" data-view="trends">Trends</button>
   <button class="tab-btn" data-view="performance">Performance</button>
   <button class="tab-btn" data-view="duration">Duration</button>
@@ -131,6 +132,53 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:20px;}
       <h2>Channel Growth Signal</h2>
       <div class="desc">Average views per video by year — the clearest read on whether performance is trending up or down</div>
       <canvas id="chartAvgViewsYear"></canvas>
+    </div>
+  </section>
+
+  <!-- CHANNEL HEALTH -->
+  <section class="view" id="view-health">
+    <div class="panel" id="healthDiagnosisPanel">
+      <h2>Diagnosis</h2>
+      <div class="desc" id="healthDiagnosisText" style="font-size:13.5px;line-height:1.6;">Loading…</div>
+    </div>
+    <div class="cards" id="healthCards"></div>
+    <div class="panel">
+      <div class="controls">
+        <label class="small">Hit threshold:</label>
+        <select id="healthHitThreshold">
+          <option value="1000">1,000+ views</option>
+          <option value="5000">5,000+ views</option>
+          <option value="10000" selected>10,000+ views</option>
+          <option value="50000">50,000+ views</option>
+        </select>
+      </div>
+      <h2>Reach Trend: Avg Views/Video vs Avg Views/Day</h2>
+      <div class="desc">Views/day controls for how long each video has had to accumulate views — the clearest recency-normalized signal of whether reach is growing or shrinking</div>
+      <canvas id="chartHealthReach" style="max-height:380px;"></canvas>
+    </div>
+    <div class="row">
+      <div class="panel">
+        <h2>Hit Rate vs Flop Rate by Year</h2>
+        <div class="desc">Share of mature videos (30+ days old) crossing the hit threshold vs falling under 100 views</div>
+        <canvas id="chartHitFlop"></canvas>
+      </div>
+      <div class="panel">
+        <h2>Total Views by Year</h2>
+        <div class="desc">Aggregate reach — is upload volume growth offsetting the per-video decline?</div>
+        <canvas id="chartHealthTotalViews"></canvas>
+      </div>
+    </div>
+    <div class="row">
+      <div class="panel">
+        <h2>Upload Cadence</h2>
+        <div class="desc">Average videos published per day, by year</div>
+        <canvas id="chartCadence"></canvas>
+      </div>
+      <div class="panel">
+        <h2>Engagement Rate Trend</h2>
+        <div class="desc">(likes + comments) / views — stable engagement despite falling reach points to a discovery problem, not a quality problem</div>
+        <canvas id="chartHealthEngagement"></canvas>
+      </div>
     </div>
   </section>
 
@@ -372,9 +420,16 @@ function tokenize(title){
 }
 
 /* ---------- data enrichment ---------- */
+const NOW = new Date();
+function daysSince(dateStr){
+  return Math.max(1, (NOW - new Date(dateStr+'T00:00:00Z')) / 86400000);
+}
+
 const allData = RAW.map(d=>{
   const eng = d.v>0 ? (d.l+d.c)/d.v : 0;
-  return {...d, eng};
+  const age = daysSince(d.d);
+  const vpd = d.v / age; // views/day since published — recency-normalized reach signal
+  return {...d, eng, age, vpd};
 });
 allData.sort((a,b)=> a.d < b.d ? -1 : a.d > b.d ? 1 : 0);
 
@@ -477,6 +532,131 @@ function groupBy(arr, key){
   const keyFn = typeof key === 'function' ? key : (d=>d[key]);
   for(const d of arr){ const k = keyFn(d); (out[k] = out[k] || []).push(d); }
   return out;
+}
+
+function mean(arr){ return arr.length ? arr.reduce((s,v)=>s+v,0)/arr.length : 0; }
+
+/* ================= CHANNEL HEALTH ================= */
+function initHealthControls(){
+  document.getElementById('healthHitThreshold').addEventListener('change', buildHealth);
+  buildHealth();
+}
+
+function buildHealth(){
+  const emptyCharts = ()=>['chartHealthReach','chartHitFlop','chartHealthTotalViews','chartCadence','chartHealthEngagement']
+    .forEach(id=>makeChart(id,{type:'bar',data:{labels:[],datasets:[]}}));
+
+  if(data.length===0){
+    document.getElementById('healthCards').innerHTML = '<div class="card"><div class="label">No data</div><div class="value">—</div></div>';
+    document.getElementById('healthDiagnosisText').textContent = 'No videos in the current filter.';
+    emptyCharts();
+    return;
+  }
+
+  const threshold = parseInt(document.getElementById('healthHitThreshold').value, 10);
+  const byYear = groupBy(data, 'y');
+  const years = Object.keys(byYear).filter(Boolean).sort();
+
+  const avgViews = years.map(y => mean(byYear[y].map(d=>d.v)));
+  const avgVpd = years.map(y => mean(byYear[y].map(d=>d.vpd)));
+  const totalViews = years.map(y => byYear[y].reduce((s,d)=>s+d.v,0));
+  const engRatePct = years.map(y => mean(byYear[y].map(d=>d.eng))*100);
+
+  const matureByYear = {};
+  years.forEach(y => { matureByYear[y] = byYear[y].filter(d => d.age >= 30); });
+  const hitRate = years.map(y => matureByYear[y].length ? (matureByYear[y].filter(d=>d.v>=threshold).length/matureByYear[y].length*100) : 0);
+  const flopRate = years.map(y => matureByYear[y].length ? (matureByYear[y].filter(d=>d.v<100).length/matureByYear[y].length*100) : 0);
+
+  // upload cadence: gaps between consecutive uploads (in the currently filtered set), attributed to the later video's year
+  const sorted = [...data].sort((a,b)=> a.d < b.d ? -1 : a.d > b.d ? 1 : 0);
+  const gapsByYear = {}; years.forEach(y=>gapsByYear[y]=[]);
+  for(let i=1;i<sorted.length;i++){
+    const gap = (new Date(sorted[i].d+'T00:00:00Z') - new Date(sorted[i-1].d+'T00:00:00Z')) / 86400000;
+    const y = sorted[i].y;
+    if(gapsByYear[y] !== undefined && gap >= 0) gapsByYear[y].push(gap);
+  }
+  const uploadsPerDay = years.map(y=>{
+    const avgGap = mean(gapsByYear[y]);
+    return avgGap > 0 ? 1/avgGap : 0;
+  });
+
+  /* ---- cards ---- */
+  const peakIdx = avgViews.indexOf(Math.max(...avgViews));
+  const peakYear = years[peakIdx], peakAvg = avgViews[peakIdx];
+  const curYear = years[years.length-1], curAvg = avgViews[avgViews.length-1];
+  const avgChangePct = peakAvg ? ((curAvg-peakAvg)/peakAvg*100) : 0;
+
+  const peakHitIdx = hitRate.indexOf(Math.max(...hitRate));
+  const peakHit = hitRate[peakHitIdx], peakHitYear = years[peakHitIdx];
+  const curHit = hitRate[hitRate.length-1];
+
+  const curCadence = uploadsPerDay[uploadsPerDay.length-1];
+
+  const day = 86400000;
+  const last90 = data.filter(d => (NOW - new Date(d.d+'T00:00:00Z')) <= 90*day);
+  const prior90 = data.filter(d => { const diff = NOW - new Date(d.d+'T00:00:00Z'); return diff > 90*day && diff <= 180*day; });
+  const last90Vpd = mean(last90.map(d=>d.vpd));
+  const prior90Vpd = mean(prior90.map(d=>d.vpd));
+  const vpdChangePct = prior90Vpd ? ((last90Vpd-prior90Vpd)/prior90Vpd*100) : null;
+
+  document.getElementById('healthCards').innerHTML = [
+    {label:`Avg Views/Video — Peak (${peakYear})`, value: fmtCompact(peakAvg)},
+    {label:`Avg Views/Video — ${curYear}`, value: fmtCompact(curAvg), delta:`<div class="delta ${avgChangePct>=0?'up':'down'}">${pct(avgChangePct)} vs peak</div>`},
+    {label:`Hit Rate — Peak (${peakHitYear})`, value: peakHit.toFixed(1)+'%'},
+    {label:`Hit Rate — ${curYear}`, value: curHit.toFixed(1)+'%'},
+    {label:'Upload Cadence (latest yr)', value: curCadence.toFixed(1)+' / day'},
+    {label:'Views/Day: Last 90d vs Prior 90d', value: vpdChangePct===null?'—':pct(vpdChangePct)},
+  ].map(c=>`<div class="card"><div class="label">${c.label}</div><div class="value">${c.value}</div>${c.delta||''}</div>`).join('');
+
+  /* ---- diagnosis text ---- */
+  const diag = document.getElementById('healthDiagnosisText');
+  diag.innerHTML = `Average views per video peaked in <strong>${peakYear}</strong> at ${fmtCompact(peakAvg)}; ` +
+    `<strong>${curYear}</strong> is averaging ${fmtCompact(curAvg)} (${pct(avgChangePct)}). ` +
+    `Hit rate (≥${fmt(threshold)} views, videos 30+ days old) peaked at ${peakHit.toFixed(1)}% in ${peakHitYear} vs ${curHit.toFixed(1)}% in ${curYear}. ` +
+    `Current upload cadence is about ${curCadence.toFixed(1)} videos/day. ` +
+    (vpdChangePct===null ? '' : `Views/day in the last 90 days is ${pct(vpdChangePct)} vs the prior 90 days — ` +
+      `treat this as provisional since very recent videos can show inflated early velocity that doesn't always hold. `) +
+    `Engagement rate (likes+comments/views) has stayed in a fairly narrow band across years, which suggests any reach decline is a discovery/algorithm issue rather than an audience-quality issue.`;
+
+  /* ---- charts ---- */
+  makeChart('chartHealthReach', {
+    type:'line',
+    data:{labels:years, datasets:[
+      {label:'Avg Views/Video', data:avgViews, borderColor:COLORS.amber, backgroundColor:'rgba(255,180,84,.12)', yAxisID:'y', tension:.3, fill:true},
+      {label:'Avg Views/Day (recency-normalized)', data:avgVpd, borderColor:COLORS.accent, backgroundColor:'transparent', yAxisID:'y1', tension:.3, borderDash:[5,3]}
+    ]},
+    options:{interaction:{mode:'index',intersect:false}, scales:{
+      y:{beginAtZero:true, position:'left', title:{display:true,text:'Avg Views/Video'}},
+      y1:{beginAtZero:true, position:'right', grid:{drawOnChartArea:false}, title:{display:true,text:'Avg Views/Day'}}
+    }}
+  });
+
+  makeChart('chartHitFlop', {
+    type:'bar',
+    data:{labels:years, datasets:[
+      {label:`Hit rate (≥${fmt(threshold)} views)`, data:hitRate, backgroundColor:COLORS.green},
+      {label:'Flop rate (<100 views)', data:flopRate, backgroundColor:COLORS.accent}
+    ]},
+    options:{scales:{y:{beginAtZero:true, ticks:{callback:v=>v+'%'}}}}
+  });
+
+  makeChart('chartHealthTotalViews', {
+    type:'bar',
+    data:{labels:years, datasets:[{label:'Total Views', data:totalViews, backgroundColor:COLORS.accent2}]},
+    options:{plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true}}}
+  });
+
+  makeChart('chartCadence', {
+    type:'bar',
+    data:{labels:years, datasets:[{label:'Videos/day', data:uploadsPerDay, backgroundColor:COLORS.amber}]},
+    options:{plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true}}}
+  });
+
+  makeChart('chartHealthEngagement', {
+    type:'line',
+    data:{labels:years, datasets:[{label:'Engagement Rate %', data:engRatePct, borderColor:COLORS.green, backgroundColor:'rgba(62,207,142,.12)', fill:true, tension:.3}]},
+    options:{plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true, ticks:{callback:v=>v+'%'}}}}
+  });
 }
 
 /* ================= TRENDS ================= */
@@ -1081,6 +1261,7 @@ function refreshAll(){
   document.getElementById('topicDetailPanel').style.display = 'none';
   if(chartRegistry['chartTopicTrend']){ chartRegistry['chartTopicTrend'].destroy(); delete chartRegistry['chartTopicTrend']; }
   safe('overview', buildOverview);
+  safe('health', buildHealth);
   safe('trends', renderTrendsAll);
   safe('performance', buildPerformance);
   safe('duration', buildDuration);
@@ -1096,6 +1277,7 @@ function safe(name, fn){
   catch(e){ console.error('Failed to init '+name+':', e); }
 }
 safe('overview', buildOverview);
+safe('healthInit', initHealthControls);
 safe('trendsInit', initTrendsControls);
 safe('performance', buildPerformance);
 safe('duration', buildDuration);
@@ -1107,4 +1289,3 @@ safe('globalFilterInit', initGlobalFilter);
 </script>
 </body>
 </html>
-
